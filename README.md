@@ -37,3 +37,7 @@ A mobile-friendly rowing calculator, and a sister app to the [Watt Calculator](h
 ## Releasing an update
 
 After changing any file, change `VERSION` at the top of `sw.js` (for example to today's date). Phones then download the new version in the background and show an "Update available" note; it also takes effect the next time the app is opened.
+
+## Credits
+
+Built by Marc Roy with [Claude](https://claude.ai) (Anthropic), which co-wrote the code. Based on the [Watt Calculator](https://github.com/madooroy/WattCalculator). Save Image uses [html2canvas](https://html2canvas.hertzen.com/) (MIT license).
