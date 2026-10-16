@@ -506,3 +506,47 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
   .hr-range-edit { gap: 2px; }
   .hr-range-edit input { width: 40px; }
 }
+
+/* ---------------------------------------------------------------------------
+   Landscape phones: use the full width (like the Watt Calculator) so the
+   Peloton Levels table fits without swiping, and tighten vertical spacing.
+   --------------------------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 500px) {
+  body {
+    padding:
+      calc(10px + env(safe-area-inset-top))
+      calc(12px + env(safe-area-inset-right))
+      calc(24px + env(safe-area-inset-bottom))
+      calc(12px + env(safe-area-inset-left));
+  }
+  .container { max-width: 1000px; }
+  h1 { font-size: 20px; margin: 4px 0 10px; }
+  .card { padding: 12px; margin-bottom: 12px; }
+
+  /* Peloton Levels: all 12 columns on screen at once */
+  .levels-table { width: 100%; table-layout: fixed; }
+  .levels-table th, .levels-table td { min-width: 0; padding: 4px 2px; }
+  .levels-table .lvl { width: 72px; padding-left: 6px; }
+  .levels-table .cell-watts { font-size: 14px; }
+  .levels-table .mid .cell-watts { font-size: 15px; }
+  .levels-table .cell-pace { font-size: 11px; }
+  .levels-table thead .zone-head th { font-size: 13px; }
+  .levels-table thead .sub-head th { font-size: 10px; }
+
+  .swipe-hint { display: none; }
+
+  /* Heart rate: Max HR and LTHR tables side by side */
+  .hr-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+}
+
+/* Large screens (tablets, computers) */
+@media (min-width: 900px) {
+  .container { max-width: 1000px; }
+  .levels-table { width: 100%; table-layout: fixed; }
+  .levels-table th, .levels-table td { min-width: 0; }
+  .levels-table .lvl { width: 90px; }
+  .swipe-hint { display: none; }
+  .hr-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+}
+.hr-pair .hr-group-title { margin-top: 10px; }
+.hr-pair > div > .table-scroll-wrapper { margin-bottom: 4px; }

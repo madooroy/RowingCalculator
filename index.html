@@ -209,19 +209,25 @@
         <button class="secondary-btn" type="button" data-save="hr-default">Save Image</button>
       </div>
       <div class="export-title" data-hr-title>Heart Rate Zones</div>
-      <div class="hr-group-title">Max Heart Rate Zones</div>
+      <div class="hr-pair">
+        <div>
+        <div class="hr-group-title">Max Heart Rate Zones</div>
       <div class="table-scroll-wrapper">
         <table class="row-zones hr-zones">
           <thead><tr><th>Zone</th><th>% Max HR</th><th>BPM</th></tr></thead>
           <tbody id="hr-default-max-body"></tbody>
         </table>
       </div>
-      <div class="hr-group-title">Lactate Threshold Heart Rate Zones</div>
+        </div>
+        <div>
+        <div class="hr-group-title">Lactate Threshold Heart Rate Zones</div>
       <div class="table-scroll-wrapper">
         <table class="row-zones hr-zones">
           <thead><tr><th>Zone</th><th>% LTHR</th><th>BPM</th></tr></thead>
           <tbody id="hr-default-lthr-body"></tbody>
         </table>
+      </div>
+        </div>
       </div>
       <div class="help-text">Heart rate zones progress continuously, with each zone starting exactly 1 BPM above the previous zone.</div>
     </div>
@@ -234,19 +240,25 @@
       </div>
       <div class="export-title" data-hr-title>Custom Heart Rate Zones</div>
       <div id="custom-hr-error" class="error-text no-export" aria-live="polite"></div>
-      <div class="hr-group-title">Custom Max Heart Rate Zones</div>
+      <div class="hr-pair">
+        <div>
+        <div class="hr-group-title">Custom Max Heart Rate Zones</div>
       <div class="table-scroll-wrapper">
         <table class="row-zones hr-zones">
           <thead><tr><th>Zone</th><th>% Max HR</th><th>BPM</th></tr></thead>
           <tbody id="hr-custom-max-body"></tbody>
         </table>
       </div>
-      <div class="hr-group-title">Custom Lactate Threshold Heart Rate Zones</div>
+        </div>
+        <div>
+        <div class="hr-group-title">Custom Lactate Threshold Heart Rate Zones</div>
       <div class="table-scroll-wrapper">
         <table class="row-zones hr-zones">
           <thead><tr><th>Zone</th><th>% LTHR</th><th>BPM</th></tr></thead>
           <tbody id="hr-custom-lthr-body"></tbody>
         </table>
+      </div>
+        </div>
       </div>
       <div class="help-text export-hide">Edit a boundary and the neighbouring zone moves with it, so each zone starts exactly 1 point above the previous one. Max HR values must stay at or below 100%. LTHR values are limited so the calculated BPM does not exceed your Max HR.</div>
     </div>
@@ -269,7 +281,7 @@
         <span data-level-status></span>
         <span class="level-buttons"><button class="secondary-btn" type="button" data-level-mode="auto" hidden>Auto</button><button class="secondary-btn" type="button" data-level-mode="ftp" hidden>My FTP</button></span>
       </div>
-      <div class="help-text export-hide">Swipe sideways to view all zones. Tap a level to pin it, or use My FTP for targets between levels.</div>
+      <div class="help-text export-hide"><span class="swipe-hint">Swipe sideways to view all zones. </span>Tap a level to pin it, or use My FTP for targets between levels.</div>
       <div class="table-scroll-wrapper power-matrix-scroll">
         <table class="levels-table">
           <thead id="levels-head"></thead>

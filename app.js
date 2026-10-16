@@ -979,15 +979,50 @@ function loadHtml2Canvas() {
   return html2canvasLoader;
 }
 
-async function saveSectionImage(name, button) {
-  const original = button.textContent;
-  button.disabled = true;
-  button.textContent = 'Saving…';
+// ---------------------------------------------------------------------------
+// Phones: Print and Save Image both open the share sheet (Save Image, Print,
+// Messages ...). Home-screen web apps on iPhone can't use the browser's print
+// dialog or file downloads reliably, but the share sheet works. Same approach
+// as the Watt Calculator.
+// ---------------------------------------------------------------------------
+
+const EXPORT_FILE_NAMES = {
+  levels: 'rowing-peloton-levels.png',
+  zones: 'rowing-power-zones.png',
+  'hr-default': 'rowing-heart-rate-zones.png',
+  'hr-custom': 'rowing-custom-heart-rate-zones.png'
+};
+
+let pendingShare = null; // { button, file } waiting for one more tap
+const exportLabels = new Map();
+
+function useShareSheet() {
+  if (!navigator.share || !navigator.canShare) return false;
+  if (!window.matchMedia('(pointer: coarse)').matches) return false;
+  try {
+    return navigator.canShare({ files: [new File([''], 'zones.png', { type: 'image/png' })] });
+  } catch {
+    return false;
+  }
+}
+
+function exportButtons() {
+  return [...document.querySelectorAll('[data-print], [data-save]')];
+}
+
+function restoreExportLabels() {
+  exportButtons().forEach(btn => {
+    if (!exportLabels.has(btn)) exportLabels.set(btn, btn.textContent);
+    if (pendingShare?.button !== btn) btn.textContent = exportLabels.get(btn);
+  });
+}
+
+async function renderSectionBlob(name) {
+  const html2canvas = await loadHtml2Canvas();
+  const source = $(`${name}-export`);
   const holder = document.createElement('div');
   holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
   try {
-    const html2canvas = await loadHtml2Canvas();
-    const source = $(`${name}-export`);
     const clone = source.cloneNode(true);
     clone.removeAttribute('id');
     clone.hidden = false;
@@ -1001,37 +1036,80 @@ async function saveSectionImage(name, button) {
     clone.classList.add('exporting');
     holder.appendChild(clone);
     document.body.appendChild(holder);
-
     const canvas = await html2canvas(clone, { backgroundColor: '#ffffff', scale: 2, logging: false });
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    const fileName = {
-      levels: 'rowing-peloton-levels.png',
-      zones: 'rowing-power-zones.png',
-      'hr-default': 'rowing-heart-rate-zones.png',
-      'hr-custom': 'rowing-custom-heart-rate-zones.png'
-    }[name];
-    const file = new File([blob], fileName, { type: 'image/png' });
+    if (!blob) throw new Error('Image export failed.');
+    return blob;
+  } finally {
+    holder.remove();
+  }
+}
 
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file] }); } catch { /* cancelled */ }
+async function shareImageFile(file, button) {
+  try {
+    await navigator.share({ files: [file], title: file.name.replace(/\.png$/, '') });
+  } catch (error) {
+    if (error.name === 'AbortError') return; // share sheet closed without choosing
+    // iPhone only opens the share sheet straight after a tap. If preparing the
+    // image took too long, keep it ready and ask for one more tap.
+    if (error.name === 'NotAllowedError' && !pendingShare) {
+      pendingShare = { button, file };
+      button.textContent = 'Tap to Share';
+      return;
+    }
+    throw error;
+  }
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+async function saveSectionImage(name, button) {
+  const fileName = EXPORT_FILE_NAMES[name];
+  exportButtons().forEach(btn => { btn.disabled = true; });
+  button.textContent = 'Preparing…';
+  try {
+    const blob = await renderSectionBlob(name);
+    if (useShareSheet()) {
+      await shareImageFile(new File([blob], fileName, { type: 'image/png' }), button);
     } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      downloadBlob(blob, fileName);
     }
   } catch (err) {
     console.warn(err);
-    alert('Sorry, the image could not be created.');
+    alert('Sorry, the image could not be created. Please try again.');
   } finally {
-    holder.remove();
-    button.disabled = false;
-    button.textContent = original;
+    exportButtons().forEach(btn => { btn.disabled = false; });
+    restoreExportLabels();
   }
+}
+
+// Print and Save Image buttons. On phones both open the share sheet, which
+// includes Print; on computers Print opens the normal print dialog.
+function onExportClick(action, name, button) {
+  if (pendingShare?.button === button) {
+    const { file } = pendingShare;
+    pendingShare = null;
+    restoreExportLabels();
+    shareImageFile(file, button).catch(error => {
+      console.warn(error);
+      alert('Sharing the image failed. Please try again.');
+    });
+    return;
+  }
+  pendingShare = null;
+  restoreExportLabels();
+
+  if (action === 'save' || useShareSheet()) saveSectionImage(name, button);
+  else printSection(name);
 }
 
 // ---------------------------------------------------------------------------
@@ -1106,9 +1184,12 @@ function bindEvents() {
   });
 
   document.querySelectorAll('[data-print]').forEach(btn =>
-    btn.addEventListener('click', () => printSection(btn.dataset.print)));
+    btn.addEventListener('click', () => onExportClick('print', btn.dataset.print, btn)));
   document.querySelectorAll('[data-save]').forEach(btn =>
-    btn.addEventListener('click', () => saveSectionImage(btn.dataset.save, btn)));
+    btn.addEventListener('click', () => onExportClick('save', btn.dataset.save, btn)));
+  restoreExportLabels();
+  // Load the image library early so the share sheet opens quickly after a tap.
+  setTimeout(() => loadHtml2Canvas().catch(() => {}), 1200);
 }
 
 function loadSaved() {
