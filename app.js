@@ -70,6 +70,7 @@ function parseMmSs(text) {
 // small numbers would otherwise collapse) and pace recalculated from them.
 const targetCache = {};
 function levelTargets(level, mode) {
+  if (level === 'ftp') return ftpTargets(readFtp(), mode);
   const key = `${mode}-${level}`;
   if (targetCache[key]) return targetCache[key];
 
@@ -82,6 +83,44 @@ function levelTargets(level, mode) {
     return { pace: Math.round(paceFromWatts(watts)), watts };
   });
   return targetCache[key];
+}
+
+// "My FTP" targets: a custom level that sits between Peloton's levels, so its
+// FTP (Challenging midpoint) equals yours exactly. Each target is interpolated
+// between the two levels either side of your FTP (on a ratio scale, since the
+// levels are spaced by percentage); beyond Level 1 or 10 the nearest level is
+// scaled. Pace is then worked out from the watts.
+function ftpTargets(ftp, mode) {
+  const raw = level => PELOTON_PACES[level].map(text => wattsFromPace(parseMmSs(text)));
+  const ascending = [...LEVELS].reverse(); // 1 → 10
+  const rawFtp = level => raw(level)[7];
+
+  let watts;
+  if (ftp <= rawFtp(1)) {
+    watts = raw(1).map(w => w * ftp / rawFtp(1));
+  } else if (ftp >= rawFtp(10)) {
+    watts = raw(10).map(w => w * ftp / rawFtp(10));
+  } else {
+    const hiIdx = ascending.findIndex(level => rawFtp(level) >= ftp);
+    const lo = ascending[hiIdx - 1];
+    const hi = ascending[hiIdx];
+    const t = Math.log(ftp / rawFtp(lo)) / Math.log(rawFtp(hi) / rawFtp(lo));
+    const a = raw(lo);
+    const b = raw(hi);
+    watts = a.map((w, i) => Math.exp(Math.log(w) * (1 - t) + Math.log(b[i]) * t));
+  }
+
+  // Rounded mode rounds to 5 W, except at very low FTPs (like Level 1),
+  // where rounding would make some values identical.
+  const step = (mode === 'rounded' && ftp >= 50) ? ROUND_STEP : 1;
+  return watts.map(w => {
+    const rounded = Math.round(w / step) * step;
+    return { pace: Math.round(paceFromWatts(rounded)), watts: rounded };
+  });
+}
+
+function levelName(level) {
+  return level === 'ftp' ? 'My FTP' : `Level ${level}`;
 }
 
 // A level's FTP is its Challenging midpoint.
@@ -183,8 +222,27 @@ const state = {
   convertMode: 'p2w',
   solve: 'pace',
   targetMode: 'exact',
-  level: 6
+  // 'auto'   = the Peloton level closest to your FTP
+  // 'ftp'    = custom targets built from your exact FTP (between levels)
+  // 'pinned' = a level chosen by hand
+  levelMode: 'auto',
+  pinnedLevel: 6,
+  level: 6           // the level in use: a number, or 'ftp' (see updateLevel)
 };
+
+// The level in use: the one closest to your FTP in Auto, otherwise the pinned one.
+function autoLevel() {
+  return closestLevel(readFtp(), state.targetMode) ?? 6;
+}
+function updateLevel() {
+  if (state.levelMode === 'pinned') state.level = state.pinnedLevel;
+  else if (state.levelMode === 'ftp' && readFtp() > 0) state.level = 'ftp';
+  else state.level = autoLevel();
+}
+function levelTag() {
+  if (state.level === 'ftp') return `${Math.round(readFtp())}W`;
+  return state.levelMode === 'pinned' ? 'Pinned' : 'Auto';
+}
 
 const $ = id => document.getElementById(id);
 
@@ -258,7 +316,7 @@ function updateZoneBadge(el, watts, ftp, seconds = 0) {
 
 function updateLevelBadge(el, watts) {
   const zone = pelotonZoneForWatts(watts, state.level, state.targetMode);
-  if (!zone) { setBadgeEmpty(el, `Level ${state.level}: —`); return; }
+  if (!zone) { setBadgeEmpty(el, `${levelName(state.level)}: —`); return; }
 
   const t = levelTargets(state.level, state.targetMode);
   let range = '';
@@ -271,10 +329,12 @@ function updateLevelBadge(el, watts) {
   } else {
     range = `Max tops out at ${t[11].watts}W · ${formatPace(t[11].pace, false)}/500m`;
   }
-  const modeText = state.targetMode === 'rounded' ? 'rounded' : 'Peloton';
+  const modeText = state.level === 'ftp'
+    ? (state.targetMode === 'rounded' ? 'from your FTP, rounded' : 'from your FTP')
+    : (state.targetMode === 'rounded' ? 'rounded' : 'Peloton');
   el.className = 'calc-badge';
   el.style.backgroundColor = zone.color;
-  el.innerHTML = `Level ${state.level}: ${zone.name}<span class="badge-subline">${range} (${modeText})</span>`;
+  el.innerHTML = `${levelName(state.level)} (${levelTag()}): ${zone.name}<span class="badge-subline">${range} (${modeText})</span>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -413,16 +473,31 @@ function renderZones() {
     }).join('');
   }
 
-  const suggested = closestLevel(ftp, state.targetMode);
-  const btn = $('use-suggested');
-  if (suggested) {
-    btn.textContent = `Level ${suggested} (${levelFtp(suggested, state.targetMode)}W)`;
-    btn.disabled = suggested === state.level;
-    btn.dataset.level = suggested;
+}
+
+// Explains which level is in use and why, in both places the level is shown.
+function renderLevelStatus() {
+  const ftp = readFtp();
+  const lf = levelFtp(state.level, state.targetMode);
+  let text;
+  if (state.level === 'ftp') {
+    const closest = closestLevel(ftp, state.targetMode);
+    const cf = levelFtp(closest, state.targetMode);
+    const rel = Math.abs(ftp - cf) < 1 ? 'right at' : (ftp > cf ? 'above' : 'below');
+    text = `My FTP: targets built from your ${Math.round(ftp)}W FTP, ${rel} Level ${closest} (${cf}W). They update when your FTP changes.`;
+  } else if (state.levelMode !== 'pinned') {
+    text = ftp
+      ? `Auto: Level ${state.level} (FTP ${lf}W) is the closest level to your ${Math.round(ftp)}W FTP, and it updates when your FTP changes.`
+      : `Enter your FTP in Power Zones to have a level chosen for you.`;
   } else {
-    btn.textContent = '—';
-    btn.disabled = true;
+    const closest = closestLevel(ftp, state.targetMode);
+    text = `Pinned to Level ${state.level} (FTP ${lf}W).` +
+      (ftp && closest && closest !== state.level ? ` Auto would choose Level ${closest} for your ${Math.round(ftp)}W FTP.` : '');
   }
+  document.querySelectorAll('[data-level-status]').forEach(el => { el.textContent = text; });
+  document.querySelectorAll('[data-level-mode]').forEach(btn => {
+    btn.hidden = btn.dataset.levelMode === state.levelMode || !(ftp > 0);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -439,14 +514,24 @@ function renderLevels() {
     `<tr class="zone-head"><th class="lvl" rowspan="2" style="color:var(--text);font-style:normal">Level</th>${zoneHead}</tr>` +
     `<tr class="sub-head">${subHead}</tr>`;
 
-  $('levels-body').innerHTML = LEVELS.map(level => {
+  // In "My FTP" mode, add your custom row where it falls among the levels.
+  const rows = [...LEVELS];
+  if (state.level === 'ftp') {
+    const ftp = readFtp();
+    const at = rows.findIndex(level => levelFtp(level, mode) <= ftp);
+    rows.splice(at === -1 ? rows.length : at, 0, 'ftp');
+  }
+
+  $('levels-body').innerHTML = rows.map(level => {
     const cells = levelTargets(level, mode).map((t, i) => {
       const isMid = i % 3 === 1;
       const style = isMid ? ` style="background:${PELOTON_ZONES[Math.floor(i / 3)].color}"` : '';
       return `<td class="${isMid ? 'mid' : ''}"${style}><span class="cell-pace">${formatPace(t.pace, false)}</span><span class="cell-watts">${t.watts}</span></td>`;
     }).join('');
     const selected = level === state.level;
-    return `<tr data-level="${level}" tabindex="0" class="${selected ? 'selected' : ''}" aria-selected="${selected}"><td class="lvl">Level ${level}</td>${cells}</tr>`;
+    const mine = level === 'ftp';
+    const label = mine ? `My FTP<small>${Math.round(readFtp())}W</small>` : `Level ${level}`;
+    return `<tr data-level="${level}" tabindex="${mine ? -1 : 0}" class="${selected ? 'selected' : ''}${mine ? ' my-ftp' : ''}" aria-selected="${selected}"><td class="lvl">${label}</td>${cells}</tr>`;
   }).join('');
 
   $('levels-export-title').textContent = mode === 'rounded'
@@ -800,27 +885,42 @@ function setTargetMode(mode) {
     btn.setAttribute('aria-pressed', String(mode === 'rounded'));
   });
   storageSet('targets', mode);
-  renderLevelSelect();
   refreshAll();
 }
 
+// Pin a level by hand ('auto' returns to following your FTP).
+// 'auto', 'ftp', or a level number to pin.
 function setLevel(level) {
-  state.level = level;
-  storageSet('level', level);
-  $('level-select').value = String(level);
-  renderLevelSelect();
+  if (level === 'auto' || level === 'ftp') {
+    state.levelMode = level;
+  } else {
+    state.levelMode = 'pinned';
+    state.pinnedLevel = level;
+    storageSet('level', level);
+  }
+  storageSet('level-mode', state.levelMode);
   refreshAll();
 }
 
 function renderLevelSelect() {
   const select = $('level-select');
-  select.innerHTML = LEVELS.map(l =>
-    `<option value="${l}">Level ${l} · FTP ${levelFtp(l, state.targetMode)}W</option>`).join('');
-  select.value = String(state.level);
-  $('level-select-lbl').textContent = `Level ${state.level}`;
+  const auto = autoLevel();
+  const ftp = readFtp();
+  select.innerHTML =
+    `<option value="auto">Auto · Level ${auto} (closest to FTP)</option>` +
+    (ftp > 0 ? `<option value="ftp">My FTP · ${Math.round(ftp)}W (between levels)</option>` : '') +
+    LEVELS.map(l => `<option value="${l}">Level ${l} · FTP ${levelFtp(l, state.targetMode)}W</option>`).join('');
+  const value = state.levelMode === 'pinned' ? String(state.level)
+    : (state.levelMode === 'ftp' && ftp > 0 ? 'ftp' : 'auto');
+  select.value = value;
+  $('level-select-lbl').textContent =
+    value === 'auto' ? `Auto · Level ${state.level}` : value === 'ftp' ? `My FTP · ${Math.round(ftp)}W` : `Level ${state.level}`;
 }
 
 function refreshAll() {
+  updateLevel();
+  renderLevelSelect();
+  renderLevelStatus();
   renderZones();
   renderLevels();
   calcConvert();
@@ -960,21 +1060,22 @@ function bindEvents() {
     input.addEventListener('focus', () => setTimeout(() => input.select(), 0));
   });
 
-  $('level-select').addEventListener('change', e => setLevel(Number(e.target.value)));
-  $('use-suggested').addEventListener('click', e => {
-    const level = Number(e.currentTarget.dataset.level);
-    if (level) setLevel(level);
+  $('level-select').addEventListener('change', e => {
+    const v = e.target.value;
+    setLevel(v === 'auto' || v === 'ftp' ? v : Number(v));
   });
+  document.querySelectorAll('[data-level-mode]').forEach(btn =>
+    btn.addEventListener('click', () => setLevel(btn.dataset.levelMode)));
 
   const levelsBody = $('levels-body');
   levelsBody.addEventListener('click', e => {
     const row = e.target.closest('tr[data-level]');
-    if (row) setLevel(Number(row.dataset.level));
+    if (row && row.dataset.level !== 'ftp') setLevel(Number(row.dataset.level));
   });
   levelsBody.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const row = e.target.closest('tr[data-level]');
-    if (!row) return;
+    if (!row || row.dataset.level === 'ftp') return;
     e.preventDefault();
     const level = Number(row.dataset.level);
     setLevel(level);
@@ -1011,7 +1112,9 @@ function loadSaved() {
     if (saved !== null) $(id).value = saved;
   });
   const level = Number(storageGet('level'));
-  if (LEVELS.includes(level)) state.level = level;
+  if (LEVELS.includes(level)) state.pinnedLevel = level;
+  const levelMode = storageGet('level-mode');
+  if (['auto', 'ftp', 'pinned'].includes(levelMode)) state.levelMode = levelMode;
   if (storageGet('targets') === 'rounded') state.targetMode = 'rounded';
   const convert = storageGet('convert');
   if (convert === 'p2w' || convert === 'w2p') state.convertMode = convert;
@@ -1096,7 +1199,6 @@ function registerOfflineSupport() {
 window.addEventListener('DOMContentLoaded', () => {
   loadSaved();
   bindEvents();
-  renderLevelSelect();
   setTargetMode(state.targetMode);   // also renders everything
   setConvertMode(state.convertMode);
   setSolve(state.solve);

@@ -325,6 +325,21 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
 
 .zone-chip small { display: block; font-size: 10px; font-weight: 600; opacity: 0.75; }
 
+/* Which Peloton level is in use, and why */
+.level-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.card-pad-8 > .level-status { padding: 2px 4px 6px; }
+.level-buttons { display: flex; gap: 6px; flex-shrink: 0; }
+.level-status .secondary-btn { min-height: 36px; padding: 6px 10px; }
+
 /* Heart rate zones (same colors as the Watt Calculator) */
 .hr-group-title {
   font-size: 12px;
@@ -386,6 +401,10 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
 
 .levels-table tbody tr.selected td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
 .levels-table tbody tr.selected .lvl { color: var(--accent); }
+.levels-table .lvl small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+.levels-table tbody tr.my-ftp { cursor: default; }
+.levels-table tbody tr.my-ftp td { border-top: 2px dashed var(--accent); border-bottom: 2px dashed var(--accent); }
+.levels-table tbody tr.my-ftp.selected td { box-shadow: none; }
 
 /* ---------- Update notice (offline/updates) ---------- */
 
