@@ -479,20 +479,25 @@ function renderZones() {
 function renderLevelStatus() {
   const ftp = readFtp();
   const lf = levelFtp(state.level, state.targetMode);
+  const f = Math.round(ftp);
   let text;
   if (state.level === 'ftp') {
-    const closest = closestLevel(ftp, state.targetMode);
-    const cf = levelFtp(closest, state.targetMode);
-    const rel = Math.abs(ftp - cf) < 1 ? 'right at' : (ftp > cf ? 'above' : 'below');
-    text = `My FTP: targets built from your ${Math.round(ftp)}W FTP, ${rel} Level ${closest} (${cf}W). They update when your FTP changes.`;
+    // Name the levels either side of your FTP.
+    const mode = state.targetMode;
+    const below = [...LEVELS].find(l => levelFtp(l, mode) <= ftp);
+    const above = [...LEVELS].reverse().find(l => levelFtp(l, mode) > ftp);
+    const where = below && above
+      ? (levelFtp(below, mode) === f ? `the same as Level ${below}` : `between Level ${below} (${levelFtp(below, mode)}W) and Level ${above} (${levelFtp(above, mode)}W)`)
+      : below ? `above Level 10` : `below Level 1`;
+    text = `Peloton badges compare you with targets built from your exact ${f}W FTP, ${where}. They match your power zones. Tap Auto to compare with the closest Peloton level instead.`;
   } else if (state.levelMode !== 'pinned') {
     text = ftp
-      ? `Auto: Level ${state.level} (FTP ${lf}W) is the closest level to your ${Math.round(ftp)}W FTP, and it updates when your FTP changes.`
-      : `Enter your FTP in Power Zones to have a level chosen for you.`;
+      ? `Peloton badges compare you with Level ${state.level} (FTP ${lf}W), the closest level to your ${f}W FTP. Tap My FTP to compare with targets built from your exact FTP instead.`
+      : `Enter your FTP to have a Peloton level chosen for you.`;
   } else {
     const closest = closestLevel(ftp, state.targetMode);
-    text = `Pinned to Level ${state.level} (FTP ${lf}W).` +
-      (ftp && closest && closest !== state.level ? ` Auto would choose Level ${closest} for your ${Math.round(ftp)}W FTP.` : '');
+    text = `Peloton badges compare you with Level ${state.level} (FTP ${lf}W), pinned by hand.` +
+      (ftp && closest && closest !== state.level ? ` Auto would choose Level ${closest} for your ${f}W FTP.` : '');
   }
   document.querySelectorAll('[data-level-status]').forEach(el => { el.textContent = text; });
   document.querySelectorAll('[data-level-mode]').forEach(btn => {
