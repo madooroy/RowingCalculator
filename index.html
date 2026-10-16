@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rowing Calculator</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <h1 id="app-title">Rowing Calculator</h1>
+
+  <div class="tabs" role="tablist" aria-label="Calculator sections">
+    <button id="btn-convert" class="tab active" role="tab" aria-selected="true" aria-controls="convert-view" data-tab="convert" type="button" tabindex="0">Pace ⇄<br>Watts</button>
+    <button id="btn-workout" class="tab" role="tab" aria-selected="false" aria-controls="workout-view" data-tab="workout" type="button" tabindex="-1">Workout</button>
+    <button id="btn-zones" class="tab" role="tab" aria-selected="false" aria-controls="zones-view" data-tab="zones" type="button" tabindex="-1">Power Zones</button>
+    <button id="btn-hr" class="tab" role="tab" aria-selected="false" aria-controls="hr-view" data-tab="hr" type="button" tabindex="-1">HR Zones</button>
+    <button id="btn-levels" class="tab" role="tab" aria-selected="false" aria-controls="levels-view" data-tab="levels" type="button" tabindex="-1">Peloton Levels</button>
+  </div>
+
+  <!-- ===================== PACE ⇄ WATTS ===================== -->
+  <div id="convert-view" class="view" role="tabpanel" aria-labelledby="btn-convert">
+    <div class="sub-tabs" role="tablist" aria-label="Conversion direction">
+      <button class="sub-tab active" role="tab" aria-selected="true" data-convert="p2w" type="button" tabindex="0">Pace → Watts</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-convert="w2p" type="button" tabindex="-1">Watts → Pace</button>
+    </div>
+
+    <div class="card">
+      <div class="row row-stack" id="convert-pace-row">
+        <div class="row-split">
+          <label>Pace per 500m</label>
+          <div class="inline-fields">
+            <input class="input-small numeric-input" type="number" inputmode="numeric" enterkeyhint="done" id="cv-pace-min" value="2" min="0" step="1" autocomplete="off" aria-label="Pace minutes">
+            <span>m</span>
+            <input class="input-small numeric-input" type="number" inputmode="decimal" enterkeyhint="done" id="cv-pace-sec" value="9" min="0" max="59.9" step="0.1" autocomplete="off" aria-label="Pace seconds">
+            <span>s</span>
+          </div>
+        </div>
+      </div>
+      <div class="row" id="convert-watts-row" hidden>
+        <label for="cv-watts">Watts</label>
+        <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="cv-watts" value="165" min="1" step="1" autocomplete="off">
+      </div>
+      <div class="row row-stack">
+        <div class="row-split">
+          <span class="muted-label">Rowing FTP</span>
+          <div class="value-display" data-ftp-display>165W</div>
+        </div>
+        <div class="subnote-right">Set in Power Zones</div>
+      </div>
+    </div>
+
+    <div class="card result-box">
+      <div class="result-val" id="cv-out" aria-live="polite">—</div>
+      <div class="result-lbl" id="cv-out-lbl">Watts</div>
+      <div class="result-sub" id="cv-out-sub"></div>
+      <button class="system-toggle-btn" type="button" data-target-toggle>Targets: Peloton exact</button>
+      <div class="badge-container">
+        <div class="calc-badge" id="cv-zone-badge">Zone: —</div>
+        <div class="calc-badge" id="cv-level-badge">Level: —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== WORKOUT ===================== -->
+  <div id="workout-view" class="view" role="tabpanel" aria-labelledby="btn-workout" hidden>
+    <div class="sub-tabs" role="tablist" aria-label="Solve for">
+      <button class="sub-tab active" role="tab" aria-selected="true" data-solve="pace" type="button" tabindex="0">Find Pace</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-solve="time" type="button" tabindex="-1">Find Time</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-solve="distance" type="button" tabindex="-1">Find Distance</button>
+    </div>
+
+    <div class="card">
+      <div class="row" data-field="distance">
+        <label for="wo-distance">Distance (meters)</label>
+        <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="wo-distance" value="2000" min="1" step="1" autocomplete="off">
+      </div>
+
+      <div class="row row-stack" data-field="time">
+        <div class="row-split">
+          <label>Time</label>
+          <div class="inline-fields">
+            <input class="input-small numeric-input" type="number" inputmode="numeric" enterkeyhint="done" id="wo-hours" value="0" min="0" step="1" autocomplete="off" aria-label="Hours">
+            <span>h</span>
+            <input class="input-small numeric-input" type="number" inputmode="numeric" enterkeyhint="done" id="wo-minutes" value="8" min="0" max="59" step="1" autocomplete="off" aria-label="Minutes">
+            <span>m</span>
+            <input class="input-small numeric-input" type="number" inputmode="decimal" enterkeyhint="done" id="wo-seconds" value="40" min="0" max="59.9" step="0.1" autocomplete="off" aria-label="Seconds">
+            <span>s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-stack" data-field="pace" hidden>
+        <div class="row-split">
+          <label>Pace per 500m</label>
+          <div class="inline-fields">
+            <input class="input-small numeric-input" type="number" inputmode="numeric" enterkeyhint="done" id="wo-pace-min" value="2" min="0" step="1" autocomplete="off" aria-label="Pace minutes">
+            <span>m</span>
+            <input class="input-small numeric-input" type="number" inputmode="decimal" enterkeyhint="done" id="wo-pace-sec" value="20" min="0" max="59.9" step="0.1" autocomplete="off" aria-label="Pace seconds">
+            <span>s</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="wo-error" class="error-text" aria-live="polite"></div>
+
+      <div class="row row-stack">
+        <div class="row-split">
+          <span class="muted-label">Rowing FTP</span>
+          <div class="value-display" data-ftp-display>165W</div>
+        </div>
+        <div class="subnote-right">Set in Power Zones</div>
+      </div>
+    </div>
+
+    <div class="card result-box">
+      <div class="result-val" id="wo-out" aria-live="polite">—</div>
+      <div class="result-lbl" id="wo-out-lbl">Pace per 500m</div>
+      <div class="result-sub" id="wo-out-sub"></div>
+      <div class="result-sub" id="wo-out-sub2"></div>
+      <button class="system-toggle-btn" type="button" data-target-toggle>Targets: Peloton exact</button>
+      <div class="badge-container">
+        <div class="calc-badge" id="wo-zone-badge">Zone: —</div>
+        <div class="calc-badge" id="wo-level-badge">Level: —</div>
+      </div>
+    </div>
+  </div>
+
+  <details class="tss-note">
+    <summary>ⓘ About these numbers</summary>
+    <p>Pace and watts are linked by the Concept2 formula used by most rowing monitors, including the SmartRow: watts = 2.80 ÷ (seconds per meter)³. Because power rises with the cube of speed, 10% more watts makes you only about 3% faster.</p>
+    <p>Calories assume about 1 kJ of work ≈ 1 kcal burned. Rowing monitors usually add a resting allowance, so they show more.</p>
+    <p>"Rounded to 5W" rounds each Peloton target to the nearest 5 watts (Level 1 stays exact) and recalculates the pace from the rounded watts, so pace and watts always match.</p>
+  </details>
+
+  <!-- ===================== POWER ZONES ===================== -->
+  <div id="zones-view" class="view" role="tabpanel" aria-labelledby="btn-zones" hidden>
+    <div class="card no-export">
+      <div class="row">
+        <label for="ftp-in">Rowing FTP (Watts)</label>
+        <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="ftp-in" value="165" min="1" step="1" autocomplete="off">
+      </div>
+      <div class="row">
+        <span class="muted-label">Threshold Pace</span>
+        <div class="value-display" id="threshold-pace">—</div>
+      </div>
+      <div class="row">
+        <label for="level-select">Peloton Level</label>
+        <div class="select-wrapper">
+          <span class="select-display" id="level-select-lbl" aria-hidden="true">Level 6</span>
+          <select id="level-select" aria-label="Peloton level"></select>
+        </div>
+      </div>
+      <div class="row row-stack">
+        <div class="row-split">
+          <span class="muted-label">Closest Level to FTP</span>
+          <button id="use-suggested" class="secondary-btn" type="button">Level 6</button>
+        </div>
+        <div class="subnote-right">Each level's FTP is its Challenging midpoint. Tap to use it.</div>
+      </div>
+    </div>
+
+    <div class="card card-pad-8" id="zones-export">
+      <div class="controls-row no-export">
+        <button class="secondary-btn" type="button" data-print="zones">Print Power Zones</button>
+        <button class="secondary-btn" type="button" data-save="zones">Save Image</button>
+      </div>
+      <div class="export-title" id="zones-export-title">Rowing Power Zones · FTP 165W</div>
+      <div class="table-scroll-wrapper">
+        <table class="row-zones">
+          <thead><tr><th>Zone</th><th>% FTP</th><th>Watts</th><th>Pace</th></tr></thead>
+          <tbody id="zones-body"></tbody>
+        </table>
+      </div>
+      <div class="help-text">Pace is per 500m. Zones match the Peloton effort cues: at the level whose FTP equals yours, each zone lines up with that level's Easy, Moderate, Challenging and Max targets. The same percentages work as custom power zones in intervals.icu.</div>
+    </div>
+  </div>
+
+  <!-- ===================== HR ZONES ===================== -->
+  <div id="hr-view" class="view" role="tabpanel" aria-labelledby="btn-hr" hidden>
+    <div class="card no-export">
+      <div class="row">
+        <label for="hr-max-in">Max Heart Rate (BPM)</label>
+        <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="hr-max-in" value="185" min="60" step="1" autocomplete="off">
+      </div>
+      <div class="row">
+        <label for="hr-lthr-in">Lactate Threshold HR (BPM)</label>
+        <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="hr-lthr-in" value="169" min="60" step="1" autocomplete="off">
+      </div>
+      <div id="hr-input-error" class="error-text" aria-live="polite"></div>
+    </div>
+
+    <div class="sub-tabs" role="tablist" aria-label="Heart rate zone systems">
+      <button class="sub-tab active" role="tab" aria-selected="true" data-hr-subtab="default" type="button" tabindex="0">Default</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-hr-subtab="custom" type="button" tabindex="-1">Custom</button>
+    </div>
+
+    <div id="hr-default-export" class="card card-pad-8">
+      <div class="controls-row no-export">
+        <button class="secondary-btn" type="button" data-print="hr-default">Print HR Zones</button>
+        <button class="secondary-btn" type="button" data-save="hr-default">Save Image</button>
+      </div>
+      <div class="export-title" data-hr-title>Heart Rate Zones</div>
+      <div class="hr-group-title">Max Heart Rate Zones</div>
+      <div class="table-scroll-wrapper">
+        <table class="row-zones hr-zones">
+          <thead><tr><th>Zone</th><th>% Max HR</th><th>BPM</th></tr></thead>
+          <tbody id="hr-default-max-body"></tbody>
+        </table>
+      </div>
+      <div class="hr-group-title">Lactate Threshold Heart Rate Zones</div>
+      <div class="table-scroll-wrapper">
+        <table class="row-zones hr-zones">
+          <thead><tr><th>Zone</th><th>% LTHR</th><th>BPM</th></tr></thead>
+          <tbody id="hr-default-lthr-body"></tbody>
+        </table>
+      </div>
+      <div class="help-text">Heart rate zones progress continuously, with each zone starting exactly 1 BPM above the previous zone.</div>
+    </div>
+
+    <div id="hr-custom-export" class="card card-pad-8" hidden>
+      <div class="controls-row no-export">
+        <button id="reset-custom-hr" class="secondary-btn" type="button">Reset HR Zones</button>
+        <button class="secondary-btn" type="button" data-print="hr-custom">Print HR Zones</button>
+        <button class="secondary-btn" type="button" data-save="hr-custom">Save Image</button>
+      </div>
+      <div class="export-title" data-hr-title>Custom Heart Rate Zones</div>
+      <div id="custom-hr-error" class="error-text no-export" aria-live="polite"></div>
+      <div class="hr-group-title">Custom Max Heart Rate Zones</div>
+      <div class="table-scroll-wrapper">
+        <table class="row-zones hr-zones">
+          <thead><tr><th>Zone</th><th>% Max HR</th><th>BPM</th></tr></thead>
+          <tbody id="hr-custom-max-body"></tbody>
+        </table>
+      </div>
+      <div class="hr-group-title">Custom Lactate Threshold Heart Rate Zones</div>
+      <div class="table-scroll-wrapper">
+        <table class="row-zones hr-zones">
+          <thead><tr><th>Zone</th><th>% LTHR</th><th>BPM</th></tr></thead>
+          <tbody id="hr-custom-lthr-body"></tbody>
+        </table>
+      </div>
+      <div class="help-text export-hide">Edit a boundary and the neighbouring zone moves with it, so each zone starts exactly 1 point above the previous one. Max HR values must stay at or below 100%. LTHR values are limited so the calculated BPM does not exceed your Max HR.</div>
+    </div>
+  </div>
+
+  <!-- ===================== PELOTON LEVELS ===================== -->
+  <div id="levels-view" class="view" role="tabpanel" aria-labelledby="btn-levels" hidden>
+    <div class="sub-tabs" role="tablist" aria-label="Target values">
+      <button class="sub-tab active" role="tab" aria-selected="true" data-targets="exact" type="button" tabindex="0">Peloton Exact</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-targets="rounded" type="button" tabindex="-1">Rounded to 5W</button>
+    </div>
+
+    <div class="card card-pad-8" id="levels-export">
+      <div class="controls-row no-export">
+        <button class="secondary-btn" type="button" data-print="levels">Print Levels</button>
+        <button class="secondary-btn" type="button" data-save="levels">Save Image</button>
+      </div>
+      <div class="export-title" id="levels-export-title">Rowing Pace/Output Targets (per 500 meters)</div>
+      <div class="help-text export-hide">Swipe sideways to view all zones. Tap a level to select it.</div>
+      <div class="table-scroll-wrapper power-matrix-scroll">
+        <table class="levels-table">
+          <thead id="levels-head"></thead>
+          <tbody id="levels-body"></tbody>
+        </table>
+      </div>
+      <div class="help-text" id="levels-note"></div>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
