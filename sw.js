@@ -8,7 +8,7 @@
 // Phones notice the new version, download it in the background, and show an
 // "Update available" note. Old saved copies are deleted automatically.
 
-const VERSION = '2026-10-18';
+const VERSION = '2026-10-18b';
 const CACHE_NAME = `rowing-calculator-${VERSION}`;
 
 const APP_FILES = [

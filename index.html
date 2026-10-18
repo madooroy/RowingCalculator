@@ -138,7 +138,7 @@
     <p>Pace and watts are linked by the Concept2 formula used by most rowing monitors, including the SmartRow: watts = 2.80 ÷ (seconds per meter)³. Because power rises with the cube of speed, 10% more watts makes you only about 3% faster.</p>
     <p>Calories assume about 1 kJ of work ≈ 1 kcal burned. Rowing monitors usually add a resting allowance, so they show more.</p>
     <p>The first badge shows your effort zone, from your FTP. The second compares you with Peloton targets: <strong>Auto</strong> uses the Peloton level closest to your FTP, and <strong>My FTP</strong> uses targets built from your exact FTP, between levels. Choose in Effort Zones.</p>
-    <p>"Rounded to 5W" rounds each Peloton target to the nearest 5 watts (Level 1 stays exact) and recalculates the pace from the rounded watts, so pace and watts always match.</p>
+    <p>Peloton targets can be shown exactly (Peloton's paces) or with watts rounded to the nearest 2, 5 or 10, with the pace recalculated from the rounded watts so the two always match. Choose in Peloton Levels, or tap the Targets button to step through the options. If rounding would make a level's Low, Mid and High targets identical, that level uses the next smaller step.</p>
   </details>
 
   <!-- ===================== EFFORT ZONES ===================== -->
@@ -266,9 +266,12 @@
 
   <!-- ===================== PELOTON LEVELS ===================== -->
   <div id="levels-view" class="view" role="tabpanel" aria-labelledby="btn-levels" hidden>
-    <div class="sub-tabs" role="tablist" aria-label="Target values">
-      <button class="sub-tab active" role="tab" aria-selected="true" data-targets="exact" type="button" tabindex="0">Peloton Exact</button>
-      <button class="sub-tab" role="tab" aria-selected="false" data-targets="rounded" type="button" tabindex="-1">Rounded to 5W</button>
+    <div class="help-text sub-tabs-label">Round watts to · 1W shows Peloton's exact paces</div>
+    <div class="sub-tabs" role="tablist" aria-label="Round watts to">
+      <button class="sub-tab active" role="tab" aria-selected="true" data-targets="1" type="button" tabindex="0">1W</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-targets="2" type="button" tabindex="-1">2W</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-targets="5" type="button" tabindex="-1">5W</button>
+      <button class="sub-tab" role="tab" aria-selected="false" data-targets="10" type="button" tabindex="-1">10W</button>
     </div>
 
     <div class="card card-pad-8" id="levels-export">

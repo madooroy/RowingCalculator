@@ -45,7 +45,8 @@ const POWER_ZONES = [
 ];
 
 const STORAGE_PREFIX = 'rowing-calc-';
-const ROUND_STEP = 5;
+// Watts rounding choices for the Peloton targets. 1 = Peloton's exact paces.
+const ROUND_STEPS = [1, 2, 5, 10];
 
 // ---------------------------------------------------------------------------
 // Rowing math
@@ -65,24 +66,42 @@ function parseMmSs(text) {
 }
 
 // Targets for one level: 12 { pace, watts } entries in table order.
-// Exact = Peloton's paces with watts calculated from them.
-// Rounded = watts rounded to the nearest 5 (Level 1 stays exact, since its
-// small numbers would otherwise collapse) and pace recalculated from them.
+// Step 1 = Peloton's exact paces, with watts worked out from each pace.
+// Steps 2, 5 and 10 round each target's watts and recalculate the pace from
+// the rounded watts, so pace and watts always match.
 const targetCache = {};
-function levelTargets(level, mode) {
-  if (level === 'ftp') return ftpTargets(readFtp(), mode);
-  const key = `${mode}-${level}`;
+
+// Round a level's raw watts to `step`. If that makes any zone's Low, Mid and
+// High stop rising (e.g. 25, 33, 42 → 30, 30, 40), use the next smaller step
+// for that level instead. Returns { watts, step } with the step actually used.
+function roundLevelWatts(rawWatts, step) {
+  const steps = ROUND_STEPS.filter(s => s > 1 && s <= step).reverse();
+  for (const s of steps) {
+    const watts = rawWatts.map(w => Math.round(w / s) * s);
+    const ok = [0, 3, 6, 9].every(i => watts[i] < watts[i + 1] && watts[i + 1] < watts[i + 2]);
+    if (ok) return { watts, step: s };
+  }
+  return { watts: rawWatts.map(w => Math.round(w)), step: 1 };
+}
+
+function levelTargets(level, step) {
+  if (level === 'ftp') return ftpTargets(readFtp(), step);
+  const key = `${step}-${level}`;
   if (targetCache[key]) return targetCache[key];
 
-  const step = (mode === 'rounded' && level !== 1) ? ROUND_STEP : 1;
-  targetCache[key] = PELOTON_PACES[level].map(text => {
-    const pelotonPace = parseMmSs(text);
-    const rawWatts = wattsFromPace(pelotonPace);
-    if (mode !== 'rounded') return { pace: pelotonPace, watts: Math.round(rawWatts) };
-    const watts = Math.round(rawWatts / step) * step;
-    return { pace: Math.round(paceFromWatts(watts)), watts };
-  });
-  return targetCache[key];
+  const paces = PELOTON_PACES[level].map(parseMmSs);
+  const rawWatts = paces.map(wattsFromPace);
+  let targets;
+  if (step <= 1) {
+    targets = paces.map((pace, i) => ({ pace, watts: Math.round(rawWatts[i]) }));
+    targets.step = 1;
+  } else {
+    const r = roundLevelWatts(rawWatts, step);
+    targets = r.watts.map(watts => ({ pace: Math.round(paceFromWatts(watts)), watts }));
+    targets.step = r.step;
+  }
+  targetCache[key] = targets;
+  return targets;
 }
 
 // "My FTP" targets: a custom level that sits between Peloton's levels, so its
@@ -90,7 +109,7 @@ function levelTargets(level, mode) {
 // between the two levels either side of your FTP (on a ratio scale, since the
 // levels are spaced by percentage); beyond Level 1 or 10 the nearest level is
 // scaled. Pace is then worked out from the watts.
-function ftpTargets(ftp, mode) {
+function ftpTargets(ftp, step) {
   const raw = level => PELOTON_PACES[level].map(text => wattsFromPace(parseMmSs(text)));
   const ascending = [...LEVELS].reverse(); // 1 → 10
   const rawFtp = level => raw(level)[7];
@@ -110,13 +129,11 @@ function ftpTargets(ftp, mode) {
     watts = a.map((w, i) => Math.exp(Math.log(w) * (1 - t) + Math.log(b[i]) * t));
   }
 
-  // Rounded mode rounds to 5 W, except at very low FTPs (like Level 1),
-  // where rounding would make some values identical.
-  const step = (mode === 'rounded' && ftp >= 50) ? ROUND_STEP : 1;
-  return watts.map(w => {
-    const rounded = Math.round(w / step) * step;
-    return { pace: Math.round(paceFromWatts(rounded)), watts: rounded };
-  });
+  // Same rounding as the levels, including the smaller step where needed.
+  const r = step > 1 ? roundLevelWatts(watts, step) : { watts: watts.map(w => Math.round(w)), step: 1 };
+  const targets = r.watts.map(w => ({ pace: Math.round(paceFromWatts(w)), watts: w }));
+  targets.step = r.step;
+  return targets;
 }
 
 function levelName(level) {
@@ -221,7 +238,7 @@ const state = {
   tab: 'convert',
   convertMode: 'p2w',
   solve: 'pace',
-  targetMode: 'exact',
+  targetMode: 1,     // watts rounding step: 1 (Peloton exact), 2, 5 or 10
   // 'auto'   = the Peloton level closest to your FTP
   // 'ftp'    = custom targets built from your exact FTP (between levels)
   // 'pinned' = a level chosen by hand
@@ -329,9 +346,10 @@ function updateLevelBadge(el, watts) {
   } else {
     range = `Max tops out at ${t[11].watts}W · ${formatPace(t[11].pace, false)}/500m`;
   }
+  const roundText = t.step > 1 ? `rounded to ${t.step}W` : '';
   const modeText = state.level === 'ftp'
-    ? (state.targetMode === 'rounded' ? 'from your FTP, rounded' : 'from your FTP')
-    : (state.targetMode === 'rounded' ? 'rounded' : 'Peloton');
+    ? (roundText ? `from your FTP, ${roundText}` : 'from your FTP')
+    : (roundText || 'Peloton');
   el.className = 'calc-badge';
   el.style.backgroundColor = zone.color;
   el.innerHTML = `${levelName(state.level)} (${levelTag()}): ${zone.name}<span class="badge-subline">${range} (${modeText})</span>`;
@@ -539,12 +557,18 @@ function renderLevels() {
     return `<tr data-level="${level}" tabindex="${mine ? -1 : 0}" class="${selected ? 'selected' : ''}${mine ? ' my-ftp' : ''}" aria-selected="${selected}"><td class="lvl">${label}</td>${cells}</tr>`;
   }).join('');
 
-  $('levels-export-title').textContent = mode === 'rounded'
-    ? 'Rowing Pace/Output Targets (per 500 meters) · Watts rounded to 5'
+  $('levels-export-title').textContent = mode > 1
+    ? `Rowing Pace/Output Targets (per 500 meters) · Watts rounded to ${mode}`
     : 'Rowing Pace/Output Targets (per 500 meters) · Peloton paces';
 
-  $('levels-note').textContent = mode === 'rounded'
-    ? 'Watts rounded to the nearest 5 (Level 1 stays exact) with pace recalculated from the rounded watts. Paces differ from Peloton’s by about a second or less at Levels 5–10. Each cell shows pace per 500m above watts.'
+  // Levels where the chosen step would have made targets identical.
+  const smaller = LEVELS.filter(l => levelTargets(l, mode).step < mode)
+    .map(l => `Level ${l} (${levelTargets(l, mode).step}W)`);
+  const fallback = smaller.length
+    ? ` ${smaller.join(', ')} ${smaller.length === 1 ? 'uses' : 'use'} a smaller step, because rounding to ${mode}W would make some of ${smaller.length === 1 ? 'its' : 'their'} targets identical.`
+    : '';
+  $('levels-note').textContent = mode > 1
+    ? `Watts rounded to the nearest ${mode} with pace recalculated from the rounded watts, so pace and watts always match.${fallback} Each cell shows pace per 500m above watts. A level’s FTP is its Challenging midpoint.`
     : 'Peloton’s pace targets, with watts calculated from each pace. Each cell shows pace per 500m above watts. A level’s FTP is its Challenging midpoint.';
 }
 
@@ -881,13 +905,13 @@ function setSolve(solve) {
 }
 
 function setTargetMode(mode) {
+  mode = ROUND_STEPS.includes(Number(mode)) ? Number(mode) : 1;
   state.targetMode = mode;
   const buttons = [...document.querySelectorAll('[data-targets]')];
-  setTabGroup(buttons, buttons.find(b => b.dataset.targets === mode));
-  const label = mode === 'rounded' ? 'Targets: Rounded to 5W' : 'Targets: Peloton exact';
+  setTabGroup(buttons, buttons.find(b => Number(b.dataset.targets) === mode));
+  const label = mode > 1 ? `Targets: Rounded to ${mode}W` : 'Targets: Peloton exact';
   document.querySelectorAll('[data-target-toggle]').forEach(btn => {
     btn.textContent = label;
-    btn.setAttribute('aria-pressed', String(mode === 'rounded'));
   });
   storageSet('targets', mode);
   refreshAll();
@@ -1126,7 +1150,9 @@ function bindEvents() {
   document.querySelectorAll('[data-targets]').forEach(btn =>
     btn.addEventListener('click', () => setTargetMode(btn.dataset.targets)));
   document.querySelectorAll('[data-target-toggle]').forEach(btn =>
-    btn.addEventListener('click', () => setTargetMode(state.targetMode === 'rounded' ? 'exact' : 'rounded')));
+    // Each tap moves to the next rounding step: 1 → 2 → 5 → 10 → 1
+    btn.addEventListener('click', () =>
+      setTargetMode(ROUND_STEPS[(ROUND_STEPS.indexOf(state.targetMode) + 1) % ROUND_STEPS.length])));
   document.querySelectorAll('[role="tablist"]').forEach(bindArrowKeys);
 
   SAVED_INPUTS.forEach(id => {
@@ -1201,7 +1227,10 @@ function loadSaved() {
   if (LEVELS.includes(level)) state.pinnedLevel = level;
   const levelMode = storageGet('level-mode');
   if (['auto', 'ftp', 'pinned'].includes(levelMode)) state.levelMode = levelMode;
-  if (storageGet('targets') === 'rounded') state.targetMode = 'rounded';
+  // Earlier versions saved 'exact' or 'rounded' (5W).
+  const targets = storageGet('targets');
+  if (targets === 'rounded') state.targetMode = 5;
+  else if (ROUND_STEPS.includes(Number(targets))) state.targetMode = Number(targets);
   const convert = storageGet('convert');
   if (convert === 'p2w' || convert === 'w2p') state.convertMode = convert;
   const solve = storageGet('solve');

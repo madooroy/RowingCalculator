@@ -572,3 +572,5 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
 }
 .hr-pair .hr-group-title { margin-top: 10px; }
 .hr-pair > div > .table-scroll-wrapper { margin-bottom: 4px; }
+
+.sub-tabs-label { margin: 0 4px 6px; }
