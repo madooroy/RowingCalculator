@@ -574,3 +574,25 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
 .hr-pair > div > .table-scroll-wrapper { margin-bottom: 4px; }
 
 .sub-tabs-label { margin: 0 4px 6px; }
+
+/* Sub-tab rows (e.g. the Peloton Levels rounding options) stay pinned just
+   below the main tab bar. --tabs-h is set from the bar's real height in app.js. */
+.view > .sub-tabs {
+  position: sticky;
+  top: calc(env(safe-area-inset-top) + var(--tabs-h, 48px) + 8px);
+  z-index: 40;
+  box-shadow: 0 0 0 8px var(--bg);
+}
+/* The rounding row and its label share one pinned block; its background
+   runs from the tab bar down to just below the buttons. */
+.sticky-sub {
+  position: sticky;
+  top: calc(env(safe-area-inset-top) + var(--tabs-h, 48px));
+  z-index: 40;
+  background: var(--bg);
+  margin: -15px -4px 8px;
+  padding: 12px 4px 8px;
+}
+.sticky-sub .sub-tabs { margin-bottom: 0; }
+.sticky-sub .sub-tabs-label { margin-top: 0; }
+@media print { .view > .sub-tabs, .sticky-sub { position: static; } }

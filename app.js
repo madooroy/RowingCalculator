@@ -1311,7 +1311,17 @@ function registerOfflineSupport() {
 // Start
 // ---------------------------------------------------------------------------
 
+// Keep the pinned sub-tab rows just below the main tab bar, whatever its
+// height (it grows when its labels wrap onto two lines).
+function measureTabBar() {
+  const bar = document.querySelector('.tabs');
+  if (bar) document.documentElement.style.setProperty('--tabs-h', `${bar.offsetHeight}px`);
+}
+window.addEventListener('resize', measureTabBar);
+window.addEventListener('orientationchange', () => setTimeout(measureTabBar, 200));
+
 window.addEventListener('DOMContentLoaded', () => {
+  measureTabBar();
   loadSaved();
   bindEvents();
   setTargetMode(state.targetMode);   // also renders everything
