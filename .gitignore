@@ -1,0 +1,5 @@
+# Personal files kept alongside the app but not part of it
+*.xlsx
+*.xls
+*.csv
+~$*
