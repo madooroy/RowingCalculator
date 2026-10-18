@@ -137,7 +137,7 @@ function ftpTargets(ftp, step) {
 }
 
 function levelName(level) {
-  return level === 'ftp' ? 'My FTP' : `Level ${level}`;
+  return level === 'ftp' ? 'Custom Level' : `Level ${level}`;
 }
 
 // A level's FTP is its Challenging midpoint.
@@ -316,7 +316,7 @@ function setBadgeEmpty(el, text) {
 function updateZoneBadge(el, watts, ftp, seconds = 0) {
   const zone = powerZoneForWatts(watts, ftp);
   if (!zone) {
-    setBadgeEmpty(el, ftp > 0 ? 'Zone: —' : 'Zone: set your FTP in Effort Zones');
+    setBadgeEmpty(el, ftp > 0 ? 'Zone: —' : 'Zone: set your Challenging Mid in Effort Zones');
     return;
   }
   const pct = (watts / ftp) * 100;
@@ -348,7 +348,7 @@ function updateLevelBadge(el, watts) {
   }
   const roundText = t.step > 1 ? `rounded to ${t.step}W` : '';
   const modeText = state.level === 'ftp'
-    ? (roundText ? `from your FTP, ${roundText}` : 'from your FTP')
+    ? (roundText ? `from your Challenging Mid, ${roundText}` : 'from your Challenging Mid')
     : (roundText || 'Peloton');
   el.className = 'calc-badge';
   el.style.backgroundColor = zone.color;
@@ -467,12 +467,12 @@ function renderZones() {
   });
   $('threshold-pace').textContent = ftp ? `${formatPace(paceFromWatts(ftp))} /500m` : '—';
   $('zones-export-title').textContent = ftp
-    ? `Rowing Effort Zones · FTP ${Math.round(ftp)}W · Threshold ${formatPace(paceFromWatts(ftp), false)}/500m`
+    ? `Rowing Effort Zones · Challenging Mid ${Math.round(ftp)}W · ${formatPace(paceFromWatts(ftp), false)}/500m`
     : 'Rowing Effort Zones';
 
   const body = $('zones-body');
   if (!ftp) {
-    body.innerHTML = '<tr><td colspan="4" style="color:var(--muted);font-weight:500">Enter your rowing FTP to see your zones.</td></tr>';
+    body.innerHTML = '<tr><td colspan="4" style="color:var(--muted);font-weight:500">Enter your Challenging Mid to see your zones.</td></tr>';
   } else {
     let previousPct = -1;
     body.innerHTML = powerZoneRanges(ftp).map(z => {
@@ -507,15 +507,15 @@ function renderLevelStatus() {
     const where = below && above
       ? (levelFtp(below, mode) === f ? `the same as Level ${below}` : `between Level ${below} (${levelFtp(below, mode)}W) and Level ${above} (${levelFtp(above, mode)}W)`)
       : below ? `above Level 10` : `below Level 1`;
-    text = `Peloton badges compare you with targets built from your exact ${f}W FTP, ${where}. They match your effort zones. Tap Auto to compare with the closest Peloton level instead.`;
+    text = `Custom Level: Peloton badges compare you with targets built from your ${f}W Challenging Mid, ${where}. They match your effort zones. Tap Auto to use the closest Peloton level instead.`;
   } else if (state.levelMode !== 'pinned') {
     text = ftp
-      ? `Peloton badges compare you with Level ${state.level} (FTP ${lf}W), the closest level to your ${f}W FTP. Tap My FTP to compare with targets built from your exact FTP instead.`
-      : `Enter your FTP to have a Peloton level chosen for you.`;
+      ? `Peloton badges compare you with Level ${state.level} (Challenging Mid ${lf}W), the closest level to your ${f}W. Tap Custom Level for targets built from your exact ${f}W instead.`
+      : `Enter your Challenging Mid to have a Peloton level chosen for you.`;
   } else {
     const closest = closestLevel(ftp, state.targetMode);
-    text = `Peloton badges compare you with Level ${state.level} (FTP ${lf}W), pinned by hand.` +
-      (ftp && closest && closest !== state.level ? ` Auto would choose Level ${closest} for your ${f}W FTP.` : '');
+    text = `Peloton badges compare you with Level ${state.level} (Challenging Mid ${lf}W), pinned by hand.` +
+      (ftp && closest && closest !== state.level ? ` Auto would choose Level ${closest} for your ${f}W.` : '');
   }
   document.querySelectorAll('[data-level-status]').forEach(el => { el.textContent = text; });
   document.querySelectorAll('[data-level-mode]').forEach(btn => {
@@ -532,7 +532,7 @@ function renderLevels() {
   const zoneHead = PELOTON_ZONES.map(z =>
     `<th colspan="3" style="background:${z.color}">${z.name}</th>`).join('');
   const subHead = PELOTON_ZONES.map((z, i) =>
-    `<th>Low</th><th class="mid" style="background:${z.color}">${i === 2 ? 'FTP' : 'Mid'}</th><th>High</th>`).join('');
+    `<th>Low</th><th class="mid" style="background:${z.color}">Mid</th><th>High</th>`).join('');
   $('levels-head').innerHTML =
     `<tr class="zone-head"><th class="lvl" rowspan="2" style="color:var(--text);font-style:normal">Level</th>${zoneHead}</tr>` +
     `<tr class="sub-head">${subHead}</tr>`;
@@ -553,7 +553,7 @@ function renderLevels() {
     }).join('');
     const selected = level === state.level;
     const mine = level === 'ftp';
-    const label = mine ? `My FTP<small>${Math.round(readFtp())}W</small>` : `Level ${level}`;
+    const label = mine ? `Custom<small>${Math.round(readFtp())}W</small>` : `Level ${level}`;
     return `<tr data-level="${level}" tabindex="${mine ? -1 : 0}" class="${selected ? 'selected' : ''}${mine ? ' my-ftp' : ''}" aria-selected="${selected}"><td class="lvl">${label}</td>${cells}</tr>`;
   }).join('');
 
@@ -568,8 +568,8 @@ function renderLevels() {
     ? ` ${smaller.join(', ')} ${smaller.length === 1 ? 'uses' : 'use'} a smaller step, because rounding to ${mode}W would make some of ${smaller.length === 1 ? 'its' : 'their'} targets identical.`
     : '';
   $('levels-note').textContent = mode > 1
-    ? `Watts rounded to the nearest ${mode} with pace recalculated from the rounded watts, so pace and watts always match.${fallback} Each cell shows pace per 500m above watts. A level’s FTP is its Challenging midpoint.`
-    : 'Peloton’s pace targets, with watts calculated from each pace. Each cell shows pace per 500m above watts. A level’s FTP is its Challenging midpoint.';
+    ? `Watts rounded to the nearest ${mode} with pace recalculated from the rounded watts, so pace and watts always match.${fallback} Each cell shows pace per 500m above watts.`
+    : 'Peloton’s pace targets, with watts calculated from each pace. Each cell shows pace per 500m above watts.';
 }
 
 // ---------------------------------------------------------------------------
@@ -936,14 +936,14 @@ function renderLevelSelect() {
   const auto = autoLevel();
   const ftp = readFtp();
   select.innerHTML =
-    `<option value="auto">Auto · Level ${auto} (closest to FTP)</option>` +
-    (ftp > 0 ? `<option value="ftp">My FTP · ${Math.round(ftp)}W (between levels)</option>` : '') +
-    LEVELS.map(l => `<option value="${l}">Level ${l} · FTP ${levelFtp(l, state.targetMode)}W</option>`).join('');
+    `<option value="auto">Auto · Level ${auto} (closest Challenging Mid)</option>` +
+    (ftp > 0 ? `<option value="ftp">Custom Level · ${Math.round(ftp)}W (between levels)</option>` : '') +
+    LEVELS.map(l => `<option value="${l}">Level ${l} · Challenging Mid ${levelFtp(l, state.targetMode)}W</option>`).join('');
   const value = state.levelMode === 'pinned' ? String(state.level)
     : (state.levelMode === 'ftp' && ftp > 0 ? 'ftp' : 'auto');
   select.value = value;
   $('level-select-lbl').textContent =
-    value === 'auto' ? `Auto · Level ${state.level}` : value === 'ftp' ? `My FTP · ${Math.round(ftp)}W` : `Level ${state.level}`;
+    value === 'auto' ? `Auto · Level ${state.level}` : value === 'ftp' ? `Custom Level · ${Math.round(ftp)}W` : `Level ${state.level}`;
 }
 
 function refreshAll() {

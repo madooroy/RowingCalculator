@@ -50,7 +50,7 @@
       </div>
       <div class="row row-stack">
         <div class="row-split">
-          <span class="muted-label">Rowing FTP</span>
+          <span class="muted-label">Challenging Mid</span>
           <div class="value-display" data-ftp-display>165W</div>
         </div>
         <div class="subnote-right">Set in Effort Zones</div>
@@ -113,7 +113,7 @@
 
       <div class="row row-stack">
         <div class="row-split">
-          <span class="muted-label">Rowing FTP</span>
+          <span class="muted-label">Challenging Mid</span>
           <div class="value-display" data-ftp-display>165W</div>
         </div>
         <div class="subnote-right">Set in Effort Zones</div>
@@ -137,19 +137,22 @@
     <summary>ⓘ About these numbers</summary>
     <p>Pace and watts are linked by the Concept2 formula used by most rowing monitors, including the SmartRow: watts = 2.80 ÷ (seconds per meter)³. Because power rises with the cube of speed, 10% more watts makes you only about 3% faster.</p>
     <p>Calories assume about 1 kJ of work ≈ 1 kcal burned. Rowing monitors usually add a resting allowance, so they show more.</p>
-    <p>The first badge shows your effort zone, from your FTP. The second compares you with Peloton targets: <strong>Auto</strong> uses the Peloton level closest to your FTP, and <strong>My FTP</strong> uses targets built from your exact FTP, between levels. Choose in Effort Zones.</p>
+    <p>The first badge shows your effort zone, from your Challenging Mid. The second compares you with Peloton targets: <strong>Auto</strong> uses the Peloton level whose Challenging Mid is closest to yours, and <strong>Custom Level</strong> uses targets built from your exact Challenging Mid, between Peloton's levels. Choose in Effort Zones.</p>
     <p>Peloton targets can be shown exactly (Peloton's paces) or with watts rounded to the nearest 2, 5 or 10, with the pace recalculated from the rounded watts so the two always match. Choose in Peloton Levels, or tap the Targets button to step through the options. If rounding would make a level's Low, Mid and High targets identical, that level uses the next smaller step.</p>
   </details>
 
   <!-- ===================== EFFORT ZONES ===================== -->
   <div id="zones-view" class="view" role="tabpanel" aria-labelledby="btn-zones" hidden>
     <div class="card no-export">
-      <div class="row">
-        <label for="ftp-in">Rowing FTP (Watts)</label>
+      <div class="row row-stack">
+        <div class="row-split">
+        <label for="ftp-in">Challenging Mid (Watts)</label>
         <input class="input-boxed" type="number" inputmode="numeric" enterkeyhint="done" id="ftp-in" value="165" min="1" step="1" autocomplete="off">
       </div>
+        <div class="subnote-right">From a 20-minute test: average watts × 0.95</div>
+      </div>
       <div class="row">
-        <span class="muted-label">Threshold Pace</span>
+        <span class="muted-label">Challenging Pace</span>
         <div class="value-display" id="threshold-pace">—</div>
       </div>
       <div class="row row-stack">
@@ -162,9 +165,9 @@
         </div>
         <div class="level-status">
           <span data-level-status></span>
-          <span class="level-buttons"><button class="secondary-btn" type="button" data-level-mode="auto" hidden>Auto</button><button class="secondary-btn" type="button" data-level-mode="ftp" hidden>My FTP</button></span>
+          <span class="level-buttons"><button class="secondary-btn" type="button" data-level-mode="auto" hidden>Auto</button><button class="secondary-btn" type="button" data-level-mode="ftp" hidden>Custom Level</button></span>
         </div>
-        <div class="subnote-right level-note">Your effort zones always come from your FTP. This setting only changes the Peloton badge on the calculator tabs and the highlighted row in Peloton Levels.</div>
+        <div class="subnote-right level-note">Your effort zones always come from your Challenging Mid. This setting only changes the Peloton badge on the calculator tabs and the highlighted row in Peloton Levels.</div>
       </div>
     </div>
 
@@ -173,14 +176,14 @@
         <button class="secondary-btn" type="button" data-print="zones">Print Effort Zones</button>
         <button class="secondary-btn" type="button" data-save="zones">Save Image</button>
       </div>
-      <div class="export-title" id="zones-export-title">Rowing Effort Zones · FTP 165W</div>
+      <div class="export-title" id="zones-export-title">Rowing Effort Zones · Challenging Mid 165W</div>
       <div class="table-scroll-wrapper">
         <table class="row-zones">
-          <thead><tr><th>Zone</th><th>% FTP</th><th>Watts</th><th>Pace</th></tr></thead>
+          <thead><tr><th>Zone</th><th>% Chall. Mid</th><th>Watts</th><th>Pace</th></tr></thead>
           <tbody id="zones-body"></tbody>
         </table>
       </div>
-      <div class="help-text">Pace is per 500m. These zones come from your FTP and match Peloton's Easy, Moderate, Challenging and Max cues for a level at your FTP. The same percentages work as custom power zones in intervals.icu.</div>
+      <div class="help-text">Pace is per 500m. These zones are percentages of your Challenging Mid and match Peloton's Easy, Moderate, Challenging and Max cues for a level with your Challenging Mid. The same percentages work as custom power zones in intervals.icu, where you enter your Challenging Mid as FTP.</div>
     </div>
   </div>
 
@@ -284,9 +287,9 @@
       <div class="export-title" id="levels-export-title">Rowing Pace/Output Targets (per 500 meters)</div>
       <div class="level-status no-export">
         <span data-level-status></span>
-        <span class="level-buttons"><button class="secondary-btn" type="button" data-level-mode="auto" hidden>Auto</button><button class="secondary-btn" type="button" data-level-mode="ftp" hidden>My FTP</button></span>
+        <span class="level-buttons"><button class="secondary-btn" type="button" data-level-mode="auto" hidden>Auto</button><button class="secondary-btn" type="button" data-level-mode="ftp" hidden>Custom Level</button></span>
       </div>
-      <div class="help-text export-hide"><span class="swipe-hint">Swipe sideways to view all zones. </span>Tap a level to pin it, or use My FTP for targets between levels.</div>
+      <div class="help-text export-hide"><span class="swipe-hint">Swipe sideways to view all zones. </span>Tap a level to pin it, or use Custom Level for targets between levels.</div>
       <div class="table-scroll-wrapper power-matrix-scroll">
         <table class="levels-table">
           <thead id="levels-head"></thead>

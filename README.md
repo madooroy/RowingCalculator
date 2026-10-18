@@ -7,10 +7,10 @@ A mobile-friendly rowing calculator, and a sister app to the [Watt Calculator](h
 - **Pace ⇄ Watts**: convert a split per 500m to watts, or watts to a split, with 2K time, 30-minute distance and kJ per hour
 - **Workout**: find pace from distance and time, time from distance and pace, or distance from time and pace, with average watts, kJ and calories
 - **Zone badges**: shows the effort zone (with IF and training load for workouts) and which Peloton effort band the pace falls in at your level
-- **Effort Zones**: five zones from your rowing FTP (Recovery, Easy, Moderate, Challenging, Max) in watts and pace, matched to Peloton's effort cues
+- **Effort Zones**: five zones from your Challenging Mid (Recovery, Easy, Moderate, Challenging, Max) in watts and pace, matched to Peloton's effort cues
 - **Peloton level** (the second badge on the calculator tabs), three ways:
-  - **Auto** (default): the Peloton level whose FTP is closest to yours, updating when your FTP changes
-  - **My FTP**: custom targets built from your exact FTP, sitting between Peloton's levels, which are about 20–25% apart. Each target is interpolated between the two levels either side of your FTP, and the row appears in the Peloton Levels table where it falls
+  - **Auto** (default): the Peloton level whose Challenging Mid is closest to yours, updating when yours changes
+  - **Custom Level**: targets built from your exact Challenging Mid, sitting between Peloton's levels, which are about 20–25% apart. Each target is interpolated between the two levels either side of your FTP, and the row appears in the Peloton Levels table where it falls
   - **Pinned**: any level chosen by hand, from Effort Zones or by tapping it in Peloton Levels
 - **Heart rate zones**: based on Max HR or Lactate Threshold HR, default or custom (same zones and rules as the Watt Calculator)
 - **Peloton Levels**: all 10 levels with Low/Mid/High pace and watts for every effort band; round watts to **1W** (Peloton's exact paces), **2W**, **5W** or **10W**
@@ -22,7 +22,7 @@ A mobile-friendly rowing calculator, and a sister app to the [Watt Calculator](h
 
 - Pace and watts use the Concept2 formula used by most rowing monitors, including the SmartRow: `watts = 2.80 ÷ (seconds per meter)³`.
 - **Rounding** (2W, 5W or 10W) rounds each Peloton target's watts and recalculates the pace from the rounded watts, so pace and watts always match. If rounding would make a level's Low, Mid and High targets identical, that level uses the next smaller step (for example Level 1 at 2W, and Levels 2–4 at 5W when 10W is chosen). 1W shows Peloton's exact paces.
-- A level's FTP is its Challenging midpoint. Effort zones are 0–43%, 44–71%, 72–87%, 88–114% and 115%+ of FTP, which line up with the Peloton bands at the matching level. The same percentages work as custom power zones in intervals.icu.
+- **Challenging Mid** is the app's anchor, the rowing equivalent of cycling FTP, named after Peloton's Challenging midpoint so the labels match Peloton's tables. Estimate it from a 20-minute test (average watts × 0.95). Effort zones are 0–43%, 44–71%, 72–87%, 88–114% and 115%+ of it, which line up with the Peloton bands at the matching level. The same percentages work as custom power zones in intervals.icu, where you enter your Challenging Mid as FTP.
 - The app keeps its own saved settings and never reads or changes the Watt Calculator's, even when both are hosted on the same site.
 - Calories assume about 1 kJ of work ≈ 1 kcal burned. Rowing monitors usually add a resting allowance, so they show more.
 

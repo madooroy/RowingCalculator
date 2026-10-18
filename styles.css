@@ -596,3 +596,4 @@ table { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabu
 .sticky-sub .sub-tabs { margin-bottom: 0; }
 .sticky-sub .sub-tabs-label { margin-top: 0; }
 @media print { .view > .sub-tabs, .sticky-sub { position: static; } }
+.row-zones th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
