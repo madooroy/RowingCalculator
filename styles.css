@@ -42,7 +42,10 @@
 html { -webkit-text-size-adjust: 100%; }
 
 /* Never let the page scroll sideways (tables scroll inside their own boxes). */
-html, body { max-width: 100%; overflow-x: hidden; }
+html, body { max-width: 100%; }
+/* overflow: clip doesn't create a scroll box, so the sticky tab bar keeps
+   working; older browsers fall back to hiding overflow on the page only. */
+html { overflow-x: hidden; }
 @supports (overflow: clip) { html, body { overflow-x: clip; } }
 
 body {
@@ -75,6 +78,25 @@ h1 { font-size: 22px; text-align: center; margin-bottom: 15px; }
 }
 
 .sub-tabs { margin-bottom: 12px; border-radius: 6px; }
+
+/* Main tab bar stays at the top while the page scrolls. It sits just below
+   the iPhone status bar / notch, and a strip of page colour covers the gap
+   above it so content doesn't show through. */
+.tabs {
+  position: sticky;
+  top: env(safe-area-inset-top);
+  z-index: 50;
+  box-shadow: 0 0 0 6px var(--bg), 0 6px 10px -6px rgba(0, 0, 0, 0.25);
+}
+.tabs::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  bottom: 100%;
+  height: calc(env(safe-area-inset-top) + 8px);
+  background: var(--bg);
+}
 
 .tab, .sub-tab {
   flex: 1;

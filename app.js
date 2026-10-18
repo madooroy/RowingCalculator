@@ -33,7 +33,7 @@ const PELOTON_ZONES = [
   { name: 'Max', color: 'var(--r-z5)' }
 ];
 
-// Power zones as % of FTP. These reproduce the Peloton effort bands: at the
+// Effort zones as % of FTP. These reproduce the Peloton effort bands: at the
 // level whose FTP (Challenging midpoint) equals yours, each zone lines up
 // with that level's Easy / Moderate / Challenging / Max targets.
 const POWER_ZONES = [
@@ -299,7 +299,7 @@ function setBadgeEmpty(el, text) {
 function updateZoneBadge(el, watts, ftp, seconds = 0) {
   const zone = powerZoneForWatts(watts, ftp);
   if (!zone) {
-    setBadgeEmpty(el, ftp > 0 ? 'Zone: —' : 'Zone: set your FTP in Power Zones');
+    setBadgeEmpty(el, ftp > 0 ? 'Zone: —' : 'Zone: set your FTP in Effort Zones');
     return;
   }
   const pct = (watts / ftp) * 100;
@@ -439,7 +439,7 @@ function calcWorkout() {
 }
 
 // ---------------------------------------------------------------------------
-// Power zones
+// Effort zones
 // ---------------------------------------------------------------------------
 
 function renderZones() {
@@ -449,8 +449,8 @@ function renderZones() {
   });
   $('threshold-pace').textContent = ftp ? `${formatPace(paceFromWatts(ftp))} /500m` : '—';
   $('zones-export-title').textContent = ftp
-    ? `Rowing Power Zones · FTP ${Math.round(ftp)}W · Threshold ${formatPace(paceFromWatts(ftp), false)}/500m`
-    : 'Rowing Power Zones';
+    ? `Rowing Effort Zones · FTP ${Math.round(ftp)}W · Threshold ${formatPace(paceFromWatts(ftp), false)}/500m`
+    : 'Rowing Effort Zones';
 
   const body = $('zones-body');
   if (!ftp) {
@@ -489,7 +489,7 @@ function renderLevelStatus() {
     const where = below && above
       ? (levelFtp(below, mode) === f ? `the same as Level ${below}` : `between Level ${below} (${levelFtp(below, mode)}W) and Level ${above} (${levelFtp(above, mode)}W)`)
       : below ? `above Level 10` : `below Level 1`;
-    text = `Peloton badges compare you with targets built from your exact ${f}W FTP, ${where}. They match your power zones. Tap Auto to compare with the closest Peloton level instead.`;
+    text = `Peloton badges compare you with targets built from your exact ${f}W FTP, ${where}. They match your effort zones. Tap Auto to compare with the closest Peloton level instead.`;
   } else if (state.levelMode !== 'pinned') {
     text = ftp
       ? `Peloton badges compare you with Level ${state.level} (FTP ${lf}W), the closest level to your ${f}W FTP. Tap My FTP to compare with targets built from your exact FTP instead.`
@@ -988,7 +988,7 @@ function loadHtml2Canvas() {
 
 const EXPORT_FILE_NAMES = {
   levels: 'rowing-peloton-levels.png',
-  zones: 'rowing-power-zones.png',
+  zones: 'rowing-effort-zones.png',
   'hr-default': 'rowing-heart-rate-zones.png',
   'hr-custom': 'rowing-custom-heart-rate-zones.png'
 };
