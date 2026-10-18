@@ -10,7 +10,7 @@ A mobile-friendly rowing calculator, and a sister app to the [Watt Calculator](h
 - **Effort Zones**: five zones from your Challenging Mid (Recovery, Easy, Moderate, Challenging, Max) in watts and pace, matched to Peloton's effort cues
 - **Peloton level** (the second badge on the calculator tabs), three ways:
   - **Auto** (default): the Peloton level whose Challenging Mid is closest to yours, updating when yours changes
-  - **Custom Level**: targets built from your exact Challenging Mid, sitting between Peloton's levels, which are about 20–25% apart. Each target is interpolated between the two levels either side of your FTP, and the row appears in the Peloton Levels table where it falls
+  - **Custom Level**: targets built from your exact Challenging Mid, sitting between Peloton's levels, which are about 20–25% apart. Each target is interpolated between the two levels either side of your Challenging Mid, and the row appears in the Peloton Levels table where it falls
   - **Pinned**: any level chosen by hand, from Effort Zones or by tapping it in Peloton Levels
 - **Heart rate zones**: based on Max HR or Lactate Threshold HR, default or custom (same zones and rules as the Watt Calculator)
 - **Peloton Levels**: all 10 levels with Low/Mid/High pace and watts for every effort band; round watts to **1W** (Peloton's exact paces), **2W**, **5W** or **10W**
